@@ -53,10 +53,51 @@ const atmosphere = new THREE.Mesh(atmosphereGeometry, atmosphereMaterial);
 scene.add(atmosphere);
 
 
-// Placeholder function for loading GPS data and creating satellite meshes
+// function for loading GPS data and creating satellite meshes
+const satellites = [];
+
 function loadGPSData() {
-  // Fetch GPS data and create satellite meshes here
+  const satelliteGeometry = new THREE.SphereGeometry(0.05, 32, 32);
+  const satelliteMaterial = new THREE.MeshPhongMaterial({ color: 0xffffff });
+
+  const orbitRadius = 1.6;
+  const numSatellites = 10;
+
+  for (let i = 0; i < numSatellites; i++) {
+    const satellite = new THREE.Mesh(satelliteGeometry, satelliteMaterial);
+
+    const orbitSpeed = Math.random() * 0.2 + 0.1;
+    const orbitRadiusX = orbitRadius + Math.random() * 0.3 - 0.15;
+    const orbitRadiusZ = orbitRadius + Math.random() * 0.3 - 0.15;
+
+    satellites.push({
+      mesh: satellite,
+      orbitSpeed: orbitSpeed,
+      orbitRadiusX: orbitRadiusX,
+      orbitRadiusZ: orbitRadiusZ,
+      orbitTilt: Math.random() * Math.PI * 2,
+    });
+
+    scene.add(satellite);
+  }
 }
+
+
+
+// Create an update function to animate the satellites' positions:
+function update(time) {
+  satellites.forEach((satellite) => {
+    const { mesh, orbitSpeed, orbitRadiusX, orbitRadiusZ, orbitTilt } = satellite;
+    const theta = (time * orbitSpeed) % (2 * Math.PI);
+
+    const x = orbitRadiusX * Math.cos(theta);
+    const z = orbitRadiusZ * Math.sin(theta);
+    const y = z * Math.tan(orbitTilt);
+
+    mesh.position.set(x, y, z);
+  });
+}
+
 
 // Position camera and set up controls
 camera.position.z = 5;
@@ -73,10 +114,20 @@ function animate() {
   renderer.render(scene, camera);
 }
 
+function render(time) {
+  time *= 0.001; // Convert time to seconds
+
+  update(time); // Add this line
+
+  renderer.render(scene, camera);
+
+  requestAnimationFrame(render);
+}
+
 // Load GPS data and start animation
 loadGPSData();
 animate();
-
+requestAnimationFrame(render);
 
 const lightColorInput = document.getElementById('lightColor');
 lightColorInput.addEventListener('input', function (event) {
